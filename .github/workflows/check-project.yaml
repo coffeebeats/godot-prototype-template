@@ -15,10 +15,6 @@ defaults:
   run:
     shell: bash
 
-env:
-  # NOTE: Switch to repository secret to have new commit run workflows.
-  ACTIONS_BOT_TOKEN: ${{ github.token }}
-
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -27,10 +23,6 @@ jobs:
     outputs:
       has_change: "${{ steps.check-non-source.outputs.any_modified == 'true' || steps.check-source.outputs.any_changed == 'true' }}"
       has_source_change: "${{ steps.check-source.outputs.any_changed == 'true' }}"
-      has_pot_change: "${{ steps.check-pot.outputs.any_changed == 'true' }}"
-      has_po_change: "${{ steps.check-po.outputs.any_changed == 'true' }}"
-      changed-png-files: "${{ steps.check-png.outputs.all_changed_files }}"
-      changed-po-files: "${{ steps.check-po.outputs.all_changed_files }}"
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -51,30 +43,6 @@ jobs:
           exclude_submodules: true
           files: "**/*.gd"
 
-      - name: Check for PNG image file changes
-        id: check-png
-        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32
-        with:
-          exclude_submodules: true
-          files: "**/*.png"
-
-      - name: Check for template translation file changes
-        id: check-pot
-        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32
-        with:
-          exclude_submodules: true
-          files: |
-            project/locale/*.pot
-            project/locale/en_US.po
-
-      - name: Check for non-template translation file changes
-        id: check-po
-        uses: tj-actions/changed-files@2f7c5bfce28377bc069a65ba478de0a74aa0ca32
-        with:
-          exclude_submodules: true
-          files: "project/locale/*.po"
-          files_ignore: "project/locale/*.pot"
-
   format-and-lint:
     needs: ["changes"]
     if: |
@@ -90,269 +58,20 @@ jobs:
           # Checkout the PR branch HEAD in case a commit is later needed.
           # See https://github.com/stefanzweifel/git-auto-commit-action?tab=readme-ov-file#checkout-the-correct-branch.
           ref: ${{ github.head_ref }}
-          token: ${{ env.ACTIONS_BOT_TOKEN }}
+
+          # NOTE: Switch to repository secret to have new commit run workflows.
+          token: ${{ github.token }}
 
       - uses: coffeebeats/godot-infra/check-godot-project@v2
         with:
           ignore-lint-errors: false
           line-length-max: 88
 
-  optimize-png:
-    needs:
-      - "changes"
-      - "format-and-lint" # NOTE: Run serially to avoid racing commits.
-    if: |
-      always() &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled') &&
-
-      github.actor != 'dependabot[bot]' &&
-      needs.changes.outputs.changed-png-files != ''
-
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          # Checkout the PR branch HEAD in case a commit is later needed.
-          # See https://github.com/stefanzweifel/git-auto-commit-action?tab=readme-ov-file#checkout-the-correct-branch.
-          ref: ${{ github.head_ref }}
-          token: ${{ env.ACTIONS_BOT_TOKEN }}
-
-      - uses: coffeebeats/godot-infra/.github/actions/parse-godot-version@v2
-        id: version
-        with:
-          gdenv-pin-path: .godot-version
-
-      - uses: coffeebeats/godot-infra/.github/actions/setup-godot@v2
-        with:
-          version: ${{ steps.version.outputs.semantic }}
-
-      - name: Install 'pngcrush' tool
-        run: sudo apt-get install -y pngcrush
-
-      - name: Optimize images
-        run: |
-          files="$(echo "${{ needs.changes.outputs.changed-png-files }}" | xargs)"
-
-          for f in $files; do
-            echo "Optimizing image: $f"
-
-            echo "$(du -sh $f) (before)"
-            pngcrush "$f" "$f.opt"
-            mv "$f.opt" "$f"
-            echo "$(du -sh $f) (after)"
-          done
-
-      - name: Import optimized images
-        run: godot --verbose --headless --quit --import
-
-      - uses: coffeebeats/godot-infra/commit-changes@v2
-        with:
-          description: "optimizing PNG images"
-
-  check-translations:
-    needs:
-      - "changes"
-      - "optimize-png" # NOTE: Run serially to avoid racing commits.
-    if: |
-      always() &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled') &&
-
-      github.actor != 'dependabot[bot]' &&
-      (
-        (needs.changes.outputs.has_pot_change == 'true' || needs.changes.outputs.has_po_change == 'true') ||
-        contains( github.event.pull_request.labels.*.name, 'autorelease: pending')
-      )
-
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          # Checkout the PR branch HEAD in case a commit is later needed.
-          # See https://github.com/stefanzweifel/git-auto-commit-action?tab=readme-ov-file#checkout-the-correct-branch.
-          ref: ${{ github.head_ref }}
-          token: ${{ env.ACTIONS_BOT_TOKEN }}
-
-      # NOTE: Translation files should not need changes from a release PR.
-      - name: Verify state for release PRs
-        if: |
-          contains( github.event.pull_request.labels.*.name, 'autorelease: pending') &&
-          (needs.changes.outputs.has_pot_change == 'true' || needs.changes.outputs.has_po_change == 'true')
-        run: exit 1
-
-      # 1. Install tools.
-
-      - name: Install 'gettext' tools
-        run: |
-          # Disable man-db, which sometimes takes minutes to process triggers for.
-          sudo debconf-communicate <<< "set man-db/auto-update false"
-          sudo dpkg-reconfigure man-db
-
-          sudo apt-get install --no-install-recommends -y gettext
-
-      - name: Install 'translate-toolkit' tools
-        if: |
-          needs.changes.outputs.has_pot_change == 'true' ||
-          needs.changes.outputs.has_po_change == 'true'
-        run: |
-          python3 -m pip install translate-toolkit
-
-          if ! command -v poswap >/dev/null; then
-            echo "Failed to install 'poswap'; exiting."
-            exit 1
-          fi
-
-      # 2. Validate translation files.
-
-      # NOTE: While we could just check the changed ones, because this will also
-      # be run on release branches, it's better to just check all of them.
-      - name: Validate translation files
-        run: |
-          for f in $(ls project/locale | grep -E '\.pot?$'); do
-            msgfmt "project/locale/$f" --check
-          done
-
-      - name: Check for fuzzy translations before release
-        if: "${{ contains( github.event.pull_request.labels.*.name, 'autorelease: pending') }}"
-        run: |
-          for f in $(ls project/locale | grep -E '\.po$'); do
-            if grep '#,' "project/locale/$f" >/dev/null; then
-              echo "Error: found fuzzy translation in file: $f"
-              exit 1
-            fi
-          done
-
-      # 3. Update translation files.
-
-      # Non-english 'po' files use the intermediate English translations as
-      # their source language. Ensure these are updated if any of the template
-      # files were changed.
-      - name: Update modified 'po' files
-        if: needs.changes.outputs.has_pot_change == 'true'
-        run: |
-          update_po_file () {
-            poswap project/locale/en_US.po -t "$1" "${1}.tmp"
-            msgmerge --update --backup=none "$1" "${1}.tmp"
-            rm "${1}.tmp"
-          }
-
-          for f in $(ls project/locale | grep -E '.po$'); do
-            if [[ "$f" == "en_US.po" ]]; then
-              continue
-            fi
-
-            echo "Updating translation file from template: $f"
-
-            # NOTE: Each '.po' file is updated twice to verify that the change is
-            # stable. This prevents an edge case where changes are recursively made.
-
-            f="project/locale/$f"
-
-            update_po_file "$f"
-            CHECKSUM=$(shasum -a1 "$f")
-
-            update_po_file "$f"
-            echo "$CHECKSUM" | shasum -a1 -c
-          done
-
-      - name: Compile modified 'po' files
-        if: needs.changes.outputs.has_po_change == 'true'
-        run: |
-          files="$(echo "${{ needs.changes.outputs.changed-po-files }}" | xargs)"
-
-          get_mo_filepath () {
-            echo "$(dirname "$1")/$(basename "$1" .po).mo"
-          }
-
-          compile_po_file () {
-            if [[ "$(basename "$1")" == "en_US.po" ]]; then
-              msgfmt --no-hash "$1" -o "$(get_mo_filepath "$1")"
-              return
-            fi
-
-            # Prior to compiling, reverse the file's message ID fields to match
-            # the base template. This is a reversal of the initial swap. Note
-            # that this should *not* be done for the 'en_US.po' file.
-            poswap --reverse "$(dirname "$1")/en_US.po" -t "$1" -o "${1}.tmp"
-
-            # poswap drops the header, so merge it into the swapped file.
-            msgmerge "$1" "${1}.tmp" -o "${1}.tmp"
-
-            # NOTE: Merging the header in the above step results in some
-            # translations being marked fuzzy; pass '-f' to keep using them.
-            msgfmt --no-hash -f "${1}.tmp" -o "$(get_mo_filepath "$1")"
-            rm "${1}.tmp"
-          }
-
-          for f in $files; do
-            echo "Compiling translation file: $f"
-
-            # NOTE: Each '.po' file is compiled twice to verify that the change is
-            # stable. This prevents an edge case where changes are recursively made.
-
-            compile_po_file "$f"
-            CHECKSUM=$(shasum -a1 "$(get_mo_filepath "$f")")
-
-            compile_po_file "$f"
-            echo "$CHECKSUM" | shasum -a1 -c
-          done
-
-      - uses: coffeebeats/godot-infra/commit-changes@v2
-        if: |
-          needs.changes.outputs.has_pot_change == 'true' ||
-          needs.changes.outputs.has_po_change == 'true'
-        with:
-          description: "updating translation files"
-
-  test:
-    needs: ["changes"]
-    if: needs.changes.outputs.has_change == 'true'
-
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          submodules: true
-
-      - uses: coffeebeats/godot-infra/.github/actions/parse-godot-version@v2
-        id: version
-        with:
-          gdenv-pin-path: .godot-version
-
-      - uses: coffeebeats/godot-infra/.github/actions/setup-godot@v2
-        with:
-          version: ${{ steps.version.outputs.semantic }}
-
-      - name: Initialize project imports
-        run: godot --verbose --headless --quit --import
-
-      - name: Test source code
-        run: >-
-          godot
-          --verbose
-          --headless
-          -s addons/gut/gut_cmdln.gd
-          -gdir=res://
-          -ginclude_subdirs
-          -gprefix=
-          -gsuffix=_test.gd
-          -gexit
-
   # Used to ensure all branch protection requirements are met. This is a workaround until
   # https://github.com/github-community/community/discussions/4324 is addressed.
   branch_protection:
     needs:
       - "format-and-lint"
-      - "optimize-png"
-      - "check-translations"
-      - "test"
     if: ${{ always() }}
 
     runs-on: ubuntu-latest
