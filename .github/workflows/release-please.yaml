@@ -1,0 +1,118 @@
+name: "🚀 Release: Project version"
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: write # Required by the 'publish' job.
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+
+    outputs:
+      release-created: ${{ steps.release.outputs.releases_created }}
+      release-tag: ${{ steps.release.outputs.tag_name }}
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - uses: googleapis/release-please-action@a02a34c4d625f9be7cb89156071d8567266a2445
+        id: release
+        with:
+          config-file: .release-please/config.json
+          manifest-file: .release-please/manifest.json
+
+          # NOTE: To handle releases on specific branches (e.g. a '1.X' release branch),
+          # simply change the "branches" filter in the workflow's on-"push" trigger.
+          target-branch: ${{ github.ref_name }}
+
+          # NOTE: Switch to repository secret to have release PRs run CI/CD workflows.
+          token: ${{ github.token }}
+
+      - name: Log release-please action output
+        shell: bash
+        env:
+          # See https://github.com/actions/runner/issues/1656#issuecomment-1030077729.
+          RELEASE_INFO: ${{ toJson(steps.release.outputs) }}
+        run: echo $RELEASE_INFO
+
+  publish:
+    needs: ["release-please"]
+    if: needs.release-please.outputs.release-created == 'true'
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - arch: wasm32
+            platform: web
+            storefront: unknown
+            publish-to-itchio: false # FIXME: Enable this once project is set up.
+            itchio-project: "Prototype" # FIXME: Change to current project name.
+            itchio-label: ""
+
+          - arch: x86_64
+            platform: windows
+            storefront: unknown
+
+          - arch: universal
+            platform: macos
+            storefront: unknown
+
+    uses: ./.github/workflows/publish-game.yaml
+    secrets: inherit
+    with:
+      arch: ${{ matrix.arch }}
+      platform: ${{ matrix.platform }}
+      profile: "release"
+      release-tag: ${{ needs.release-please.outputs.release-tag }}
+      storefront: ${{ matrix.storefront }}
+
+      # itch.io inputs
+      publish-to-itchio: ${{ matrix.publish-to-itchio || false }}
+      itchio-project: ${{ matrix.itchio-project }}
+      itchio-label: ${{ matrix.itchio-label }}
+
+  upload:
+    needs: ["release-please", "publish"]
+    if: needs.release-please.outputs.release-created == 'true'
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - uses: actions/download-artifact@b14cf4c92620c250e1c074ab0a5800e37df86765
+        with:
+          pattern: "game-*" # NOTE: This pattern must match the prior workflow.
+          path: ${{ runner.temp }}/dist
+          merge-multiple: true
+
+      - name: Attach assets to release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }} # Required in order to use the 'gh' CLI.
+        run: |-
+          # Set options to enable more extensive globbing.
+          shopt -s extglob
+          shopt -s globstar
+
+          ASSETS=(${{ runner.temp }}/dist/*)
+          TAG="${{ needs.release-please.outputs.release-tag }}"
+
+          for ASSET in "${ASSETS[@]}"; do
+            echo "Attaching asset to release '$TAG': $ASSET"
+
+            gh release upload \
+              --clobber \
+              ${{ needs.release-please.outputs.release-tag }} \
+              $ASSET
+          done
