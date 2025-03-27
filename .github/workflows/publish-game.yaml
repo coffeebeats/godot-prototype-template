@@ -1,0 +1,150 @@
+name: "🎮 Publish: Godot game"
+
+on:
+  workflow_call:
+    inputs:
+      release-tag:
+        type: string
+        required: true
+      platform:
+        type: string
+        required: true
+      arch:
+        type: string
+        required: true
+      storefront:
+        type: string
+        required: true
+      profile:
+        type: string
+        required: true
+
+      # itch.io inputs
+      publish-to-itchio:
+        type: boolean
+        required: false
+        default: false
+      itchio-project:
+        type: string
+        required: false
+      itchio-label:
+        type: string
+        required: false
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        type: string
+        description: "The release tag at which to build and publish the game."
+        required: true
+        default: "v2.0.2" # x-release-please-version
+
+      platform:
+        type: choice
+        description: "The platform of the exported game."
+        required: true
+        default: windows
+        options:
+          - macos
+          - windows
+          - web
+      arch:
+        type: choice
+        description: "The CPU architecture of the exported game."
+        required: true
+        default: x86_64
+        options:
+          - arm64
+          - x86_64
+          - universal
+          - wasm32
+      storefront:
+        type: choice
+        description: "The distribution storefront targeted by the game."
+        required: true
+        default: unknown
+        options:
+          - unknown
+          - steam
+      profile:
+        type: choice
+        description: "The optimization profile of the exported game."
+        required: false
+        default: release
+        options:
+          - release
+          - release_debug
+          - debug
+
+      publish-export-template:
+        type: boolean
+        description: "Whether to publish the export template as an artifact."
+        required: false
+        default: false
+
+      # itch.io inputs
+      publish-to-itchio:
+        type: boolean
+        description: "Whether to publish the game to itch.io."
+        required: false
+        default: false
+      itchio-project:
+        type: string
+        description: "The name of the itch.io project (required when publishing)."
+        required: false
+      itchio-label:
+        type: string
+        description: "The channel label to release the game to (e.g. 'beta')."
+        required: false
+        default: "release"
+
+permissions:
+  actions: write # Required by the 'export' job.
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  export:
+    uses: ./.github/workflows/export-project.yaml
+    with:
+      arch: ${{ inputs.arch }}
+      platform: ${{ inputs.platform }}
+      profile: ${{ inputs.profile }}
+      publish-export-template: ${{ inputs.publish-export-template || false }}
+      ref: ${{ inputs.release-tag }}
+      storefront: ${{ inputs.storefront }}
+
+  publish:
+    needs: ["export"]
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Download export artifact
+        uses: actions/download-artifact@b14cf4c92620c250e1c074ab0a5800e37df86765
+        with:
+          name: ${{ needs.export.outputs.name }}
+
+      - name: Extract game assets
+        run: |-
+          tar \
+            -p \
+            -xzvf \
+            ${{ needs.export.outputs.name }}.tar.gz
+
+          rm ${{ needs.export.outputs.name }}.tar.gz
+
+      - name: Inspect game artifacts
+        run: "tree -lha --dirsfirst -I .git"
+
+      - name: Publish to 'itch.io'
+        if: fromJson(inputs.publish-to-itchio)
+        uses: coffeebeats/godot-infra/publish-project-itchio@v2
+        with:
+          path: "./"
+          version: ${{ inputs.release-tag }}
+          itchio-project: ${{ contains(inputs.itchio-project, '/') && inputs.itchio-project || format('{0}/{1}', github.actor, inputs.itchio-project) }}
+          itchio-channel: "${{ inputs.arch }}-${{ inputs.platform }}${{ inputs.itchio-label != '' && format('-{0}', inputs.itchio-label) || '' }}"
+          api-key: ${{ secrets.BUTLER_API_KEY }}
