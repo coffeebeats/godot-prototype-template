@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.3 (2025-03-28)
+
+## What's Changed
+* fix(ci): add missing workflow `contents:read` permissions by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/9
+* fix(ci): increase export workflow timeout to 90 minutes by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/11
+* fix(ci): further increase `export-project` workflow timeout by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/12
+
+
+**Full Changelog**: https://github.com/coffeebeats/godot-prototype-template/compare/v0.1.2...v0.1.3
+
 ## 0.1.2 (2025-03-27)
 
 ## What's Changed
