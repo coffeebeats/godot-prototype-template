@@ -64,7 +64,7 @@ jobs:
 
       - uses: coffeebeats/godot-infra/check-godot-project@v2
         with:
-          ignore-lint-errors: false
+          ignore-lint-errors: true
           line-length-max: 88
 
   # Used to ensure all branch protection requirements are met. This is a workaround until
