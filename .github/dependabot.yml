@@ -12,11 +12,3 @@ updates:
       - coffeebeats
     schedule:
       interval: "monthly"
-
-  # Update Git submodule dependencies
-  - package-ecosystem: "gitsubmodule"
-    directory: "/"
-    reviewers:
-      - coffeebeats
-    schedule:
-      interval: "monthly"
