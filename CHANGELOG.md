@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.4 (2025-05-06)
+
+## What's Changed
+* fix(ci): add missing `issues:write` permission to `release-please` workflow by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/19
+* feat(ci): build editor on change to patch files by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/21
+* fix(ci): correctly set Godot revision in `compile-editor` workflow by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/22
+* chore(ci): update `compile-editor` workflow time limit by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/23
+* chore: ignore `godot/` directory and editor binaries by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/24
+* chore: add `.scons` to `.gitignore`; only ignore `godot/` at root by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/25
+
+
+**Full Changelog**: https://github.com/coffeebeats/godot-prototype-template/compare/v0.1.3...v0.1.4
+
 ## 0.1.3 (2025-05-01)
 
 ## What's Changed
