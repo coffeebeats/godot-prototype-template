@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.0 (2025-11-28)
+
+## What's Changed
+* fix(ci): add missing `issues:write` permission to `release-please` workflow by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/19
+* feat(ci): build editor on change to patch files by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/21
+* fix(ci): correctly set Godot revision in `compile-editor` workflow by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/22
+* chore(ci): update `compile-editor` workflow time limit by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/23
+* chore: ignore `godot/` directory and editor binaries by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/24
+* chore: add `.scons` to `.gitignore`; only ignore `godot/` at root by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/25
+* chore(deps): bump actions/checkout from 4.2.2 to 5.0.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/26
+* chore(deps): bump actions/cache from 4.2.3 to 4.3.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/27
+* chore(deps): bump tj-actions/changed-files from 46.0.5 to 47.0.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/28
+* chore(deps): bump actions/download-artifact from 4.3.0 to 5.0.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/29
+* chore(deps): bump googleapis/release-please-action from 4.2.0 to 4.3.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/30
+* chore(deps): bump googleapis/release-please-action from 4.3.0 to 4.4.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/33
+* chore(deps): bump actions/upload-artifact from 4.6.2 to 5.0.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/32
+* chore(deps): bump actions/download-artifact from 5.0.0 to 6.0.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/31
+* chore!: upgrade to Godot `v4.5` by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/34
+
+
+**Full Changelog**: https://github.com/coffeebeats/godot-prototype-template/compare/v0.1.3...v0.2.0
+
 ## 0.1.3 (2025-05-01)
 
 ## What's Changed
