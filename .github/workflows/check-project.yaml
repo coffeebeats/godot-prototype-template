@@ -25,7 +25,7 @@ jobs:
       has_source_change: "${{ steps.check-source.outputs.any_changed == 'true' }}"
 
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           fetch-depth: 0
 
@@ -53,7 +53,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           # Checkout the PR branch HEAD in case a commit is later needed.
           # See https://github.com/stefanzweifel/git-auto-commit-action?tab=readme-ov-file#checkout-the-correct-branch.
