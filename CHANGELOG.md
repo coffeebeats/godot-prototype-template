@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1 (2025-12-11)
+
+## What's Changed
+* fix(ci): reclaim disk space prior to compiling by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/36
+* chore(deps): bump actions/checkout from 5.0.0 to 6.0.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/35
+
+
+**Full Changelog**: https://github.com/coffeebeats/godot-prototype-template/compare/v0.2.0...v0.2.1
+
 ## 0.2.0 (2025-11-28)
 
 ## What's Changed
