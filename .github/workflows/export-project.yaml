@@ -74,6 +74,9 @@ jobs:
       extra-bundled-files: ${{ steps.compile.outputs.extra-bundled-files }}
 
     steps:
+      - name: Reclaim disk space
+        uses: coffeebeats/godot-infra/.github/actions/setup-runner@v3
+
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
           ref: ${{ inputs.ref }}
