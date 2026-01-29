@@ -62,7 +62,7 @@ jobs:
           # NOTE: Switch to repository secret to have new commit run workflows.
           token: ${{ github.token }}
 
-      - uses: coffeebeats/godot-infra/check-godot-project@v3
+      - uses: coffeebeats/godot-infra/check-godot-project@v4
         with:
           ignore-lint-errors: true
           line-length-max: 88
