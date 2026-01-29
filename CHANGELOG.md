@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 (2026-01-29)
+
+## What's Changed
+* chore: update Godot to `v4.6` by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/42
+* chore(deps): bump actions/cache from 4.3.0 to 5.0.1 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/41
+* chore(deps): bump tj-actions/changed-files from 47.0.0 to 47.0.1 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/40
+* chore(deps): bump actions/upload-artifact from 5.0.0 to 6.0.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/39
+* chore(deps): bump actions/download-artifact from 6.0.0 to 7.0.0 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/38
+* chore(ci)!: pre-fill secrets in CI workflows by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/44
+
+
+**Full Changelog**: https://github.com/coffeebeats/godot-prototype-template/compare/v0.2.1...v0.3.0
+
 ## 0.2.1 (2025-12-11)
 
 ## What's Changed
