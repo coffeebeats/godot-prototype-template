@@ -60,7 +60,7 @@ jobs:
           ref: ${{ github.head_ref }}
 
           # NOTE: Switch to repository secret to have new commit run workflows.
-          token: ${{ github.token }}
+          token: ${{ secrets.GHA_TOKEN || github.token }}
 
       - uses: coffeebeats/godot-infra/check-godot-project@v4
         with:

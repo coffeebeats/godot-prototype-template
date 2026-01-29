@@ -51,7 +51,7 @@ When submitting code for review, ensure the following requirements are met:
 
 After instantiating a project from this template repository, the default GitHub actions and workflows require the following repository secrets to be set:
 
-- `ACTIONS_BOT_TOKEN` - Used to commit formatting fixes to pull requests.
+- `GHA_TOKEN` - Used to commit formatting fixes to pull requests.
 - `RELEASE_PLEASE_TOKEN` - Enables release pull requests to run CI/CD workflows.
 - `BUTLER_API_KEY` - Used to authenticate the `butler` CLI tool with `itch.io`; required when publishing to `itch.io`.
 

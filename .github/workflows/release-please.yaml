@@ -34,7 +34,7 @@ jobs:
           target-branch: ${{ github.ref_name }}
 
           # NOTE: Switch to repository secret to have release PRs run CI/CD workflows.
-          token: ${{ github.token }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
 
       - name: Log release-please action output
         shell: bash
