@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.1 (2026-02-01)
+
+## What's Changed
+* chore: upgrade project files by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/45
+* chore(deps): bump actions/checkout from 6.0.1 to 6.0.2 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/47
+* chore(deps): bump actions/cache from 5.0.1 to 5.0.3 by @dependabot[bot] in https://github.com/coffeebeats/godot-prototype-template/pull/46
+* fix(docs): use correct CLI command for code formatting and linting by @coffeebeats in https://github.com/coffeebeats/godot-prototype-template/pull/49
+
+
+**Full Changelog**: https://github.com/coffeebeats/godot-prototype-template/compare/v0.3.0...v0.3.1
+
 ## 0.3.0 (2026-01-29)
 
 ## What's Changed
